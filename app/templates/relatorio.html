@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <title>Relatório – Calculadora MEI 2025</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 16px;
+    }
+    h1, h2, h3 {
+      margin: 0 0 8px;
+    }
+    .linha {
+      margin-bottom: 4px;
+      font-size: 0.95rem;
+    }
+    .titulo {
+      font-weight: 600;
+    }
+    .box {
+      border: 1px solid #999;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+    .rodape {
+      margin-top: 24px;
+      font-size: 0.8rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+{% if resultado %}
+  <h1>Relatório – Calculadora MEI 2025</h1>
+  <p class="linha">Atividade: <strong>{{ resultado.atividade_label }}</strong></p>
+
+  <div class="box">
+    <h2>Situação atual</h2>
+    <p class="linha">Faturamento informado: R$
+      <strong>{{ "%.2f"|format(resultado.faturamento_anual) }}</strong></p>
+    <p class="linha">Meses de atividade em 2025:
+      <strong>{{ resultado.meses_atividade }}</strong></p>
+    <p class="linha">Limite proporcional: R$
+      <strong>{{ "%.2f"|format(resultado.limite_proporcional) }}</strong></p>
+    <p class="linha">Uso do limite:
+      <strong>{{ "%.1f"|format(resultado.percentual_uso * 100) }}%</strong></p>
+    <p class="linha">DAS mensal estimado:
+      <strong>R$ {{ "%.2f"|format(resultado.valor_das) }}</strong></p>
+    <p class="linha">Situação:
+      <strong>{{ resultado.faixa_situacao }}</strong></p>
+    <p class="linha">{{ resultado.mensagem_situacao }}</p>
+  </div>
+
+  <div class="box">
+    <h2>Projeção até dezembro</h2>
+    <p class="linha">Faturamento médio mensal:
+      <strong>R$ {{ "%.2f"|format(resultado.faturamento_mensal_medio) }}</strong></p>
+    <p class="linha">Faturamento projetado em 12 meses:
+      <strong>R$ {{ "%.2f"|format(resultado.faturamento_projetado_ano) }}</strong></p>
+    <p class="linha">Uso do limite anual projetado:
+      <strong>{{ "%.1f"|format(resultado.percentual_uso_projetado * 100) }}%</strong></p>
+    <p class="linha">Situação projetada:
+      <strong>{{ resultado.faixa_situacao_projetada }}</strong></p>
+    <p class="linha">{{ resultado.mensagem_projetada }}</p>
+  </div>
+
+  <div class="box">
+    <h3>Valores aproximados do DAS em 2025</h3>
+    <p class="linha">Comércio / Indústria:
+      <strong>R$ {{ "%.2f"|format(config.DAS_COMERCIO_INDUSTRIA) }}</strong></p>
+    <p class="linha">Serviços:
+      <strong>R$ {{ "%.2f"|format(config.DAS_SERVICOS) }}</strong></p>
+    <p class="linha">Comércio + Serviços:
+      <strong>R$ {{ "%.2f"|format(config.DAS_COMERCIO_SERVICOS) }}</strong></p>
+    <p class="linha">MEI Caminhoneiro (mínimo):
+      <strong>R$ {{ "%.2f"|format(config.DAS_CAMINHONEIRO_MIN) }}</strong></p>
+  </div>
+
+  <div class="rodape">
+    <p>
+      Este relatório é uma estimativa baseada em regras gerais do MEI.
+      Para decisões oficiais, consulte sempre as informações atualizadas
+      no portal gov.br e/ou um profissional de contabilidade.
+    </p>
+    <p>Gerado por: Calculadora MEI 2025</p>
+  </div>
+{% else %}
+  <p>Nenhuma simulação encontrada. Volte à página inicial e faça um novo cálculo.</p>
+{% endif %}
+
+<script>
+  // ao abrir o relatório em nova aba, já dispara a impressão (para PDF)
+  window.addEventListener("load", function () {
+    window.print();
+  });
+</script>
+
+</body>
+</html>

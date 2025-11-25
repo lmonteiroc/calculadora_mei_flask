@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+
+    <div class="card shadow-sm mb-4 border-0">
+      <div class="card-body">
+        <h1 class="h4 text-center mb-2">Calculadora MEI 2025</h1>
+        <p class="text-muted small text-center mb-4">
+          Informe seu faturamento e veja sua situação em relação ao limite do MEI,
+          com projeção até dezembro e visão da sua contribuição para o INSS.
+        </p>
+
+        <form method="post" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Faturamento bruto acumulado em 2025 (R$)</label>
+            <input
+              type="text"
+              name="faturamento_anual"
+              class="form-control {% if errors.get('faturamento_anual') %}is-invalid{% endif %}"
+              value="{{ dados_form.faturamento_anual }}"
+              placeholder="Ex.: 35000,00"
+              required
+            >
+            {% if errors.get('faturamento_anual') %}
+              <div class="invalid-feedback">
+                {{ errors.get('faturamento_anual') }}
+              </div>
+            {% else %}
+              <div class="form-text">
+                Some tudo o que você já faturou no ano como MEI (vendas, serviços, notas).
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Meses de atividade em 2025</label>
+            <input
+              type="number"
+              name="meses_atividade"
+              min="1" max="12"
+              class="form-control {% if errors.get('meses_atividade') %}is-invalid{% endif %}"
+              value="{{ dados_form.meses_atividade }}"
+            >
+            {% if errors.get('meses_atividade') %}
+              <div class="invalid-feedback">
+                {{ errors.get('meses_atividade') }}
+              </div>
+            {% else %}
+              <div class="form-text">
+                Se você começou depois de janeiro, use apenas os meses em que realmente atuou.
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label">Tipo de atividade</label>
+            <select name="atividade" class="form-select">
+              {% for atv in atividades %}
+                <option
+                  value="{{ atv.value }}"
+                  {% if dados_form.atividade == atv.value %}selected{% endif %}
+                >
+                  {{ atividade_labels[atv] }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          {# Ajuda textual sobre cada grupo de atividade #}
+          <div class="form-text small mb-3">
+            {% if dados_form.atividade == 'servicos' %}
+              Exemplos de <strong>Serviços</strong>: Uber, 99, iFood de moto, motoboy,
+              pedreiro, pintor, eletricista, programador, designer, manicure, barbeiro,
+              fotógrafo, professor particular, consultor etc.
+            {% elif dados_form.atividade == 'comercio_industria' %}
+              Exemplos de <strong>Comércio / Indústria</strong>: loja de roupas, lanchonete,
+              mercado, artesanato, e-commerce, produção de alimentos, marcenaria, revendas
+              em geral.
+            {% elif dados_form.atividade == 'comercio_servicos' %}
+              Exemplos de <strong>Comércio + Serviços</strong>: assistência técnica que
+              vende e instala peças, mecânico que vende e presta serviço, loja que vende
+              celular e também faz conserto.
+            {% elif dados_form.atividade == 'caminhoneiro' %}
+              <strong>MEI Caminhoneiro</strong>: transporte de cargas como transportador
+              autônomo (TAC) em viagens intermunicipais/interestaduais.
+            {% else %}
+              Use <strong>Serviços</strong> se você presta serviços (Uber, iFood, pedreiro,
+              dev etc.); <strong>Comércio</strong> se vende produtos; ou
+              <strong>Comércio + Serviços</strong> se faz os dois.
+            {% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">
+            Calcular
+          </button>
+        </form>
+      </div>
+    </div>
+
+    {% if resultado %}
+      {# card de resultado principal #}
+      <div class="card shadow-sm border-primary mb-4">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Resultado da simulação</h2>
+
+          <p><strong>Atividade:</strong> {{ resultado.atividade_label }}</p>
+          <p><strong>DAS mensal estimado:</strong>
+            R$ {{ "%.2f"|format(resultado.valor_das) }}</p>
+          <p><strong>Limite proporcional ({{ resultado.meses_atividade }} mês(es)):</strong>
+            R$ {{ "%.2f"|format(resultado.limite_proporcional) }}</p>
+          <p><strong>Uso do limite até agora:</strong>
+            {{ "%.1f"|format(resultado.percentual_uso * 100) }}%</p>
+          <p><strong>Situação atual:</strong> {{ resultado.faixa_situacao }}</p>
+
+          <p class="mt-3 mb-0">
+            {{ resultado.mensagem_situacao }}
+          </p>
+        </div>
+      </div>
+
+      {# card de PROJEÇÃO #}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <h3 class="h6 mb-2">Projeção até dezembro</h3>
+          <p class="small text-muted">
+            Considerando que você mantenha o mesmo ritmo médio de faturamento mensal.
+          </p>
+
+          <p><strong>Faturamento médio mensal:</strong>
+            R$ {{ "%.2f"|format(resultado.faturamento_mensal_medio) }}</p>
+          <p><strong>Faturamento projetado em 12 meses:</strong>
+            R$ {{ "%.2f"|format(resultado.faturamento_projetado_ano) }}</p>
+          <p><strong>Uso do limite anual projetado:</strong>
+            {{ "%.1f"|format(resultado.percentual_uso_projetado * 100) }}%</p>
+          <p><strong>Situação projetada:</strong>
+            {{ resultado.faixa_situacao_projetada }}</p>
+
+          <p class="mt-2 mb-0">
+            {{ resultado.mensagem_projetada }}
+          </p>
+        </div>
+      </div>
+
+      {# card de INSS / previdência #}
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <h3 class="h6 mb-2">Contribuição para o INSS (previdência)</h3>
+
+          <p><strong>INSS incluído no DAS do MEI (5% do salário mínimo):</strong>
+            R$ {{ "%.2f"|format(resultado.inss_mensal) }} por mês</p>
+          <p><strong>Total estimado de INSS em 12 meses como MEI:</strong>
+            R$ {{ "%.2f"|format(resultado.inss_anual) }}</p>
+
+          <p class="mt-3 mb-1">
+            <strong>Complemento opcional (INSS 20%):</strong>
+          </p>
+          <p class="mb-1">
+            Se você quiser aumentar o valor futuro da aposentadoria e contar como
+            contribuição de 20%, pode complementar mais
+            <strong>15% do salário mínimo</strong> (código 1910).
+          </p>
+          <p class="mb-1">
+            Valor aproximado do complemento mensal: 
+            <strong>R$ {{ "%.2f"|format(resultado.inss_complementar_mensal) }}</strong>.
+          </p>
+          <p class="mb-0">
+            Total aproximado do INSS com complemento (5% + 15%):
+            <strong>R$ {{ "%.2f"|format(resultado.inss_total_mensal_complementado) }}</strong>
+            por mês.
+          </p>
+
+          <hr class="my-3">
+
+          <p class="small mb-0">
+            Em geral, para aposentadoria por idade é exigida uma carência mínima de
+            <strong>{{ config.CARENCIA_APOSENTADORIA_IDADE }}</strong> contribuições mensais.
+            Cada DAS pago como MEI vale como <strong>1 mês de carência</strong>.
+            Contribuindo 12 meses por ano, são 12 contribuições/ano.
+          </p>
+        </div>
+      </div>
+
+      {# botão para relatório / impressão / PDF #}
+      <a
+        class="btn btn-outline-secondary w-100 mb-4"
+        target="_blank"
+        href="{{ url_for('main.relatorio',
+                         faturamento_anual=dados_form.faturamento_anual,
+                         meses_atividade=dados_form.meses_atividade,
+                         atividade=dados_form.atividade) }}"
+      >
+        Gerar relatório / imprimir (PDF)
+      </a>
+
+      {# card com orientações e links oficiais #}
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          <h3 class="h6 mb-3">Próximos passos recomendados</h3>
+          <ul class="small mb-2">
+            <li>Gerar a guia oficial do DAS no portal do empreendedor.</li>
+            <li>Manter registro organizado de todas as vendas e serviços.</li>
+            <li>
+              Ficar atento à <strong>Declaração Anual de Faturamento (DASN-SIMEI)</strong>.
+            </li>
+          </ul>
+
+          <p class="small mb-1 fw-semibold">Links úteis (gov.br):</p>
+          <ul class="small mb-0">
+            <li>
+              <a href="https://www.gov.br/empresas-e-negocios/pt-br/empreendedor/quero-ser-mei"
+                 target="_blank" rel="noopener noreferrer">
+                O que é ser MEI
+              </a>
+            </li>
+            <li>
+              <a href="https://www.gov.br/empresas-e-negocios/pt-br/empreendedor/servicos-para-mei/declaracao-anual-de-faturamento"
+                 target="_blank" rel="noopener noreferrer">
+                Declaração anual de faturamento (DASN-SIMEI)
+              </a>
+            </li>
+            <li>
+              <a href="https://www.gov.br/empresas-e-negocios/pt-br/empreendedor/mais-noticias/mei-atualizacao-de-valores-devidos-em-2025"
+                 target="_blank" rel="noopener noreferrer">
+                Valores devidos pelo MEI em 2025
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      {# card com tabela de DAS 2025 e explicações #}
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h3 class="h6 mb-3">Tabela de valores aproximados do DAS em 2025</h3>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+              <tr>
+                <th>Tipo de atividade</th>
+                <th class="text-end">Valor aproximado do DAS</th>
+              </tr>
+              </thead>
+              <tbody class="small">
+              <tr>
+                <td>Comércio / Indústria</td>
+                <td class="text-end">
+                  R$ {{ "%.2f"|format(config.DAS_COMERCIO_INDUSTRIA) }}
+                </td>
+              </tr>
+              <tr>
+                <td>Serviços</td>
+                <td class="text-end">
+                  R$ {{ "%.2f"|format(config.DAS_SERVICOS) }}
+                </td>
+              </tr>
+              <tr>
+                <td>Comércio + Serviços</td>
+                <td class="text-end">
+                  R$ {{ "%.2f"|format(config.DAS_COMERCIO_SERVICOS) }}
+                </td>
+              </tr>
+              <tr>
+                <td>MEI Caminhoneiro</td>
+                <td class="text-end">
+                  R$ {{ "%.2f"|format(config.DAS_CAMINHONEIRO_MIN) }} (mínimo)
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="small mb-2">
+            O DAS reúne contribuições como <strong>INSS</strong> (previdência) e
+            <strong>ICMS/ISS</strong>, dependendo da sua atividade. Os valores acima são
+            aproximados e podem sofrer atualização oficial.
+          </p>
+
+          <p class="small mb-0">
+            <strong>Faturamento bruto</strong> é tudo o que você recebe com vendas e serviços,
+            sem descontar despesas. <strong>Limite proporcional</strong> é o limite anual do MEI
+            ajustado para a quantidade de meses em que você atuou no ano.
+          </p>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

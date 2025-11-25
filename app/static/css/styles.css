@@ -1,0 +1,12 @@
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.card {
+  border-radius: 0.9rem;
+}
+
+.btn {
+  border-radius: 999px;
+}
